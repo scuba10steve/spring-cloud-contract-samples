@@ -5,3 +5,6 @@ stubrunner:
 
 
   #stubs.repositoryRoot: 'http://repo.spring.io/snapshot'
+
+spring:
+  cloud.stream.bindings.input.destination: orders
