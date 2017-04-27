@@ -1,7 +1,1 @@
-stubrunner:
-  #work-offline: true
-  #stubs.ids: 'com.example:beer-api-producer:+:stubs:8090'
-
-
-
-  #stubs.repositoryRoot: 'http://repo.spring.io/snapshot'
+logging.level.org.springframework.cloud: DEBUG
