@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
 import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
 /**
@@ -38,6 +39,7 @@ import spock.lang.Specification
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureStubRunner( ids = ["com.example:fraudDetectionServerMoco"])
 @DirtiesContext
+@ActiveProfiles("test")
 class MocoHttpServerStubSpec extends Specification {
 
 	@Autowired StubFinder stubFinder
@@ -49,9 +51,19 @@ class MocoHttpServerStubSpec extends Specification {
 		expect:
 			"${url.toString()}/name".toURL().text == 'fraudDetectionServerMoco'
 			"${url.toString()}/bye".toURL().text == 'bye'
-		and:
+			"${url.toString()}/bye2".toURL().text == 'bye'
+		when:
+			"${url.toString()}/name2".toURL().text
+		then:
+			thrown(IOException)
+		when:
 			stubFinder.trigger("send_order")
-		and:
+		then:
+			myListener.model?.description == "This is the order description"
+		when:
+			myListener.model = null
+			stubFinder.trigger("send_order2")
+		then:
 			myListener.model?.description == "This is the order description"
 	}
 

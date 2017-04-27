@@ -16,6 +16,7 @@
 
 package org.springframework.cloud.contract.stubrunner.provider.moco
 
+import groovy.transform.CompileStatic
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.cloud.contract.stubrunner.StubConfiguration
@@ -35,14 +36,27 @@ import java.util.regex.Pattern
 /**
  * Stub downloader that picks stubs and contracts from the provided resource.
  * If no {@link org.springframework.cloud.contract.stubrunner.spring.StubRunnerProperties#repositoryRoot}
- * is provided then by default classpath is searched according to wha thas been passed in
+ * is provided then by default classpath is searched according to what has been passed in
  * {@link org.springframework.cloud.contract.stubrunner.spring.StubRunnerProperties#ids}. The
- * pattern to search for stubs looks like this {@code /META-INF/group/id/artifactid/version/** }
- * example {@code /META-INF/com/example/fooservice/1.0.0/**}
+ * pattern to search for stubs looks like this
+ * <ul>
+ *     <li>{@code META-INF/group.id/artifactid/ ** /*.* }</li>
+ *     <li>{@code contracts/group.id/artifactid/ ** /*.* }</li>
+ *     <li>{@code mappings/group.id/artifactid/ ** /*.* }</li>
+ * </ul>
+ *
+ * examples
+ *
+ * <ul>
+ *     <li>{@code META-INF/com.example/fooservice/1.0.0/ **}</li>
+ *     <li>{@code contracts/com.example/artifactid/ ** /*.* }</li>
+ *     <li>{@code mappings/com.example/artifactid/ ** /*.* }</li>
+ * </ul>
  *
  * @author Marcin Grzejszczak
  * @since 1.1.1
  */
+@CompileStatic
 class ResourceStubProvider implements StubDownloaderBuilder {
 
 	private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass())
@@ -50,27 +64,24 @@ class ResourceStubProvider implements StubDownloaderBuilder {
 	private static final int TEMP_DIR_ATTEMPTS = 10000
 	PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(
 			new DefaultResourceLoader())
-	private static final Pattern VERSION = Pattern.compile("^(.*/META-INF/(.*)\$)")
 
 	@Override
 	StubDownloader build(StubRunnerOptions stubRunnerOptions) {
 		return new StubDownloader() {
 			@Override
 			Map.Entry<StubConfiguration, File> downloadAndUnpackStubJar(
-					StubConfiguration stubConfiguration) {
-				RepoRoot repoRoot = repoRoot(stubRunnerOptions, stubConfiguration)
-				Resource[] resources = resolver.getResources(repoRoot.fullPath)
+					StubConfiguration config) {
+				List<RepoRoot> repoRoot = repoRoot(stubRunnerOptions, config)
+				List<Resource> resources = resolveResources(repoRoot.fullPath)
+				if (log.isDebugEnabled()) {
+					log.debug("For paths " + repoRoot.fullPath + " found following resources " + resources)
+				}
 				final File tmp = createTempDir()
 				tmp.deleteOnExit()
-				String version = ""
+				Pattern groupAndArtifactPattern = Pattern.compile("^(.*)(" + config.groupId + '.' + config.artifactId + ')(.*)$')
+				String version = config.version
 				resources.each { Resource resource ->
-					Matcher matcher = VERSION.matcher(resource.URI.toString())
-					boolean matches = matcher.matches()
-					MatchResult matchResult = matcher.toMatchResult()
-					String reminder = matches ? matchResult.group(2) : ""
-					String withoutGroupAndArtifact = reminder - separatedArtifact(stubConfiguration) - File.separator
-					version = version ?: matches ? withoutGroupAndArtifact.substring(0, withoutGroupAndArtifact.indexOf(File.separator)) : ""
-					String relativePath = matches ? withoutGroupAndArtifact - version : ""
+					String relativePath = relativePathPicker(resource, groupAndArtifactPattern)
 					int lastIndexOf = relativePath.lastIndexOf(File.separator)
 					String relativePathWithoutFile = lastIndexOf > -1 ? relativePath.substring(0, lastIndexOf) : relativePath
 					Path directory = Files.createDirectories(new File(tmp, relativePathWithoutFile).toPath())
@@ -82,27 +93,43 @@ class ResourceStubProvider implements StubDownloaderBuilder {
 						log.debug("Stored file [" + newFile + "]")
 					}
 				}
-				log.info("Unpacked files for [" + stubConfiguration.groupId + ":" + stubConfiguration.artifactId +
+				log.info("Unpacked files for [" + config.groupId + ":" + config.artifactId +
 				":" + version + "] to folder [" + tmp + "]")
 				return new AbstractMap.SimpleEntry(
-						new StubConfiguration(stubConfiguration.groupId, stubConfiguration.artifactId, version,
-								stubConfiguration.classifier), tmp)
+						new StubConfiguration(config.groupId, config.artifactId, version,
+								config.classifier), tmp)
 			}
+
+			protected static String relativePathPicker(Resource resource, Pattern groupAndArtifactPattern) {
+				String uri = resource.URI.toString()
+				Matcher groupAndArtifactMatcher = groupAndArtifactPattern.matcher(uri)
+				if (groupAndArtifactMatcher.matches()) {
+					MatchResult groupAndArtifactResult = groupAndArtifactMatcher.toMatchResult()
+					return groupAndArtifactResult.group(2) + File.separator + groupAndArtifactResult.group(3)
+				} else {
+					throw new IllegalArgumentException("Illegal uri [${uri}]")
+				}
+			}
+
 		}
 	}
 
-	private RepoRoot repoRoot(StubRunnerOptions stubRunnerOptions, StubConfiguration stubConfiguration) {
+	List<Resource> resolveResources(List<String> paths) {
+		return paths.inject([] as List<Resource>) { List<Resource> acc, String path ->
+			acc.addAll(this.resolver.getResources(path))
+			return acc
+		} as List<Resource>
+	}
+
+	private List<RepoRoot> repoRoot(StubRunnerOptions stubRunnerOptions, StubConfiguration configuration) {
 		switch (stubRunnerOptions.stubRepositoryRoot) {
 			case { !it }:
-				return new RepoRoot("classpath:/META-INF/" + separatedArtifact(stubConfiguration), "/**/*.*")
+				return ['META-INF', 'contracts', 'mappings'].collect {
+					return new RepoRoot("classpath*:/${it}/**/${configuration.groupId}/${configuration.artifactId}", "/**/*.*")
+				}
 			default:
-				return new RepoRoot(stubRunnerOptions.stubRepositoryRoot)
+				return [new RepoRoot(stubRunnerOptions.stubRepositoryRoot)]
 		}
-	}
-
-	private String separatedArtifact(StubConfiguration configuration) {
-		return configuration.getGroupId().replace(".", File.separator) +
-				File.separator + configuration.getArtifactId()
 	}
 
 	// Taken from Guava
