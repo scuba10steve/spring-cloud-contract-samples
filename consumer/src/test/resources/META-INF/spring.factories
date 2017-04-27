@@ -4,5 +4,5 @@ org.springframework.cloud.contract.stubrunner.provider.moco.MocoHttpServerStub
 
 # Example of a custom Stub Downloader Provider
 org.springframework.cloud.contract.stubrunner.StubDownloaderBuilder=\
-org.springframework.cloud.contract.stubrunner.provider.moco.ResourceStubProvider
+org.springframework.cloud.contract.stubrunner.ResourceStubProvider
 
