@@ -1,0 +1,63 @@
+:toc: left
+:toclevels: 8
+:nofooter:
+:root: ../..
+:consumer: {root}/consumer
+:producer: {root}/producer
+:images_folder: ../images
+:where_are_contracts: the producer's code
+:producer_artifact: beer-api-producer
+
+= Contracts on the Producer Side
+
+In this tutorial, we will keep the contracts together with the producer code.
+
+include::../scenarios.adoc[]
+
+== Flow
+
+image::{images_folder}/flow.png[title="Consumer Driven Contract flow"]
+
+== Tutorial
+
+Using Consumer Driven Contracts is like using TDD at the architecture level. We start
+with writing a test on the consumer side.
+
+=== Consumer flow 1
+
+image::{images_folder}/consumer_flow_1.png[title="Interact with cloned producer code"]
+
+include::snippets/consumer_flow_1.adoc[]
+
+include::snippets/consumer_implementation.adoc[]
+
+include::snippets/consumer_implementation_2.adoc[]
+- Congratulations! As a consumer, you have successfully used the API of the producer both
+for HTTP and messaging. Now you can create a pull request (PR) to the consumer code with the
+proposal of contract and switch to the producer side.
+
+=== Producer Flow 1
+
+image::{images_folder}/producer_flow_1.png[title="Producer takes over the PR, writes missing impl, and merges the PR"]
+
+include::snippets/producer_flow.adoc[]
+
+==== Updating Contracts from the Pull Request
+
+include::snippets/updating_messaging_contracts_from_pr.adoc[]
+
+include::snippets/producer_implementation.adoc[]
+Now you can merge the pull request to master and your CI system would build a fat jar and
+the stubs. Congratulations! You have completed the producer side of this tutorial.
+
+include::snippets/consumer_flow_2.adoc[]
+
+include::snippets/generating_docs.adoc[]
+
+== Solutions
+
+include::snippets/solutions.adoc[]
+
+== Back to the Main Page
+
+link:../workshops.html[Click here to go back to the main page]

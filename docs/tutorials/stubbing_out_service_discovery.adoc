@@ -1,0 +1,143 @@
+:toc: left
+:toclevels: 8
+:nofooter:
+:root: ../..
+:consumer: {root}/consumer_with_discovery
+:producer: {root}/producer
+:images_folder: ../images
+:where_are_contracts: the producer's code
+:producer_artifact: beer-api-producer
+
+= Contracts on the Producer side
+
+In this tutorial, we keep the contracts together with the producer code. On the consumer
+side, we be using Service Discovery.
+
+== Scenarios
+
+image::{images_folder}/beer_1.png[title="Positive beer selling via HTTP"]
+
+{nbsp}
+{nbsp}
+
+image::{images_folder}/beer_2.png[title="Negative beer selling via HTTP"]
+
+{nbsp}
+{nbsp}
+
+== Flow
+
+image::{images_folder}/flow.png[title="Consumer Driven Contract flow"]
+
+== Tutorial
+
+Using Consumer Driven Contracts is like using TDD at the architecture level. We start by
+writing a test on the consumer side.
+
+=== Consumer flow 1
+
+image::{images_folder}/consumer_flow_1.png[title="Interact with cloned producer code"]
+
+Let's go back to our consumer code. We need to look at `BeerControllerTest` and
+`BeerController`. We know how we would like the API to look, so now we can write the
+missing implementation in the `BeerController`.
+
+TIP: Remember that, in order to use the load balancing features, we need to add the
+`org.springframework.cloud:spring-cloud-starter-netflix-eureka-client` dependency.
+
+[source,xml,indent=0,subs="verbatim,attributes",role="primary"]
+.Maven
+----
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+----
+
+[source,groovy,indent=0,subs="verbatim,attributes",role="secondary"]
+.Gradle
+----
+compile("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+----
+Also, you need to register the `RestTemplate` bean as `@LoadBalanced`. Go to
+the `ClientApplication` class and register the bean as follows:
+
+[source,java]
+----
+@Bean
+@LoadBalanced
+RestTemplate restTemplate() {
+    return new RestTemplate();
+}
+----
+
+Now let's assume that we call the producer application by using the
+`http://somenameforproducer/check` URL. You need to provide some properties to tell Stub
+Runner that the given service name (in our case, `somenameforproducer`) should be mapped
+to the running HTTP server stub of a given producer. Let's set those properties.
+Stub Runner requires you to set the `stubrunner.idsToServiceIds` mapping in which the key
+is the artifact ID and the value is the service name in the code. You also need to define
+the `idsToServiceIds` property, as shown in the following code:
+
+[source,yml]
+----
+stubrunner:
+  idsToServiceIds:
+    beer-api-producer: somenameforproducer
+----
+
+When you call the URL `http://somenameforproducer/check`, it will get redirected to a
+fake HTTP instance that was started with the `beer-api-producer` stubs JAR. We know how
+the API needs to look, so we can now go ahead and try to write the missing implementation
+of the `BeerController`.
+
+==== Writing the Missing Consumer HTTP Implementation
+
+include::snippets/consumer_http_implementation.adoc[]
+- In case of any issues you can check out the <<_missing_consumer_controller_code_with_discovery,solution>>
+
+==== Turning on Stub Runner in HTTP Consumer Tests
+
+include::snippets/stub_runner_http_consumer_tests.adoc[]
+
+==== Playing with the HTTP Contracts
+
+include::snippets/playing_with_http_contracts.adoc[]
+
+Congratulations! As a consumer, you have successfully used the API of the producer for
+both HTTP and messaging. Now you can file a pull request (PR) to the producer code with
+the proposal of the contract,
+
+Let's switch to the producer side.
+
+=== Producer Flow 1
+
+image::{images_folder}/producer_flow_1.png[title="Producer takes over the PR, writes missing impl and merges the PR"]
+
+include::snippets/producer_flow.adoc[]
+
+==== Updating Contracts from the PR
+
+include::snippets/producer_http_tests.adoc[]
+
+Now you could merge the PR to master, and your CI system would build a fat jar and the
+stubs.
+
+Congratulations! You've completed the producer side of this tutorial.
+
+include::snippets/consumer_flow_2.adoc[]
+
+== Solutions
+
+include::snippets/solutions.adoc[]
+
+=== Missing Consumer Controller Code with Discovery
+
+[source,java]
+----
+include::../../consumer_with_discovery/src/main/java/com/example/BeerController.java[tags=controller]
+----
+
+== Back to the Main Page
+
+link:../workshops.html[Click here to go back to the main page]

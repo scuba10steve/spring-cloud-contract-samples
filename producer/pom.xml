@@ -14,17 +14,9 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.1.RELEASE</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<version>2.0.0.M7</version>
+		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-		<spring-cloud.version>Dalston.BUILD-SNAPSHOT</spring-cloud.version>
-		<spring-cloud-contract.version>1.1.0.BUILD-SNAPSHOT</spring-cloud-contract.version>
-	</properties>
 
 	<dependencies>
 		<dependency>
@@ -54,11 +46,14 @@
 		</dependency>
 
 		<!-- spring cloud contract test dependencies -->
+		<!-- remove::start[] -->
+		<!-- tag::verifier_dep[] -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-contract-verifier</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- end::verifier_dep[] -->
 		<!-- tag::test_dep[] -->
 		<dependency>
 			<groupId>com.example</groupId>
@@ -67,7 +62,16 @@
 			<scope>test</scope>
 		</dependency>
 		<!-- end::test_dep[] -->
+		<!-- remove::end[] -->
 	</dependencies>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		<spring-cloud.version>Finchley.BUILD-SNAPSHOT</spring-cloud.version>
+		<spring-cloud-contract.version>2.0.0.BUILD-SNAPSHOT</spring-cloud-contract.version>
+	</properties>
 
 	<build>
 		<plugins>
@@ -76,7 +80,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 
-
+			<!-- remove::start[] -->
 			<!-- SPRING CLOUD CONTRACT -->
 			<!-- tag::test_dep_in_plugin[] -->
 			<plugin>
@@ -86,13 +90,14 @@
 				<extensions>true</extensions>
 				<configuration>
 					<packageWithBaseClasses>com.example</packageWithBaseClasses>
+					<baseClassMappings>
+						<baseClassMapping>
+							<contractPackageRegex>.*intoxication.*</contractPackageRegex>
+							<baseClassFQN>com.example.intoxication.BeerIntoxicationBase</baseClassFQN>
+						</baseClassMapping>
+					</baseClassMappings>
 				</configuration>
 				<dependencies>
-					<dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-contract-verifier</artifactId>
-						<version>${spring-cloud-contract.version}</version>
-					</dependency>
 					<dependency>
 						<groupId>com.example</groupId>
 						<artifactId>beer-common</artifactId>
@@ -102,22 +107,18 @@
 				</dependencies>
 			</plugin>
 			<!-- end::test_dep_in_plugin[] -->
-
-			<plugin>
-				<groupId>org.codehaus.gmavenplus</groupId>
-				<artifactId>gmavenplus-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>testCompile</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<!-- SPRING CLOUD CONTRACT -->
+			<!-- remove::end[] -->
 
 		</plugins>
 	</build>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>springcloudcontract-snapshots</name>
+			<url>https://springcloudcontract.jfrog.io/springcloudcontract/libs-snapshot-local</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<dependencyManagement>
 		<dependencies>

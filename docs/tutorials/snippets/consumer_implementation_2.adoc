@@ -1,0 +1,11 @@
+==== Playing with the HTTP contracts
+
+include::playing_with_http_contracts.adoc[]
+
+==== Writing the missing consumer messaging implementation
+
+include::consumer_messaging_implementation.adoc[]
+
+==== Turning on Stub Runner in messaging consumer tests
+
+include::stub_runner_messaging.adoc[]

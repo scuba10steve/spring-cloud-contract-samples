@@ -1,21 +1,23 @@
 package contracts.beer.rest
 
+import com.example.PatternUtils
 import org.springframework.cloud.contract.spec.Contract
 
-import static com.example.PatternUtils.tooYoung
-
 Contract.make {
-	request {
-		description("""
-Represents a unsuccessful scenario of getting a beer
+	description("""
+Represents an unsuccessful scenario of getting a beer
 
+```
 given:
-client is not old enough
+	client is not old enough
 when:
-he applies for a beer
+	he applies for a beer
 then:
-we'll NOT grant him the beer
+	we'll NOT grant him the beer
+```
+
 """)
+	request {
 		method 'POST'
 		url '/check'
 		body(
@@ -25,7 +27,7 @@ we'll NOT grant him the beer
 			contentType(applicationJson())
 		}
 		stubMatchers {
-			jsonPath('$.age', byRegex(tooYoung()))
+			jsonPath('$.age', byRegex(PatternUtils.tooYoung()))
 		}
 	}
 	response {

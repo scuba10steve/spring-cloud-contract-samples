@@ -1,0 +1,43 @@
+==== IDE setup
+
+include::consumer_ide_setup.adoc[]
+
+include::setup_cloned_producer.adoc[]
+
+==== Defining first HTTP contract
+
+- Time to play with the API! Create a `src/test/resources/contracts/beer/rest` and
+ `src/test/resources/contracts/beer/messaging` folders. (<<_proposal_of_simple_contracts_by_consumer,Show solution>>)
+
+ TIP: It's good practice to create also a folder for a consumer. So if your consumer's
+ application name is `foo-service` then you could create a
+ `src/test/resources/contracts/foo-service/beer/rest` and
+  `src/test/resources/contracts/foo-service/beer/messaging` folders. You'll be able to read
+  more about this in the tutorial related to the `stubs per consumer` feature.
+
+include::first_http_contract.adoc[]
+
+==== Defining second HTTP contract
+
+- Time for you to create the second contract. Create a file called `shouldRejectABeerIfTooYoung.groovy`.
+If you're lost just check out the <<_proposal_of_simple_contracts_by_consumer,solution>>
+  * Set the `age` in the request to `17`
+  * Update the response body to return a `status` equal to `NOT_OK`.
+  * Update the description
+
+==== Defining first messaging contract
+
+- Ok we've done the case for HTTP. Let's move to the `src/test/resources/contracts/beer/messaging` folder
+
+include::first_messaging_contract.adoc[]
+* Congratulations! You've created your first messaging contract!
+
+==== Defining second messaging contract
+
+- Time for you to create the second contract. Create a file called `shouldSendRejectedVerification.groovy`.
+If you're lost just check out the <<_proposal_of_simple_contracts_by_consumer,solution>>
+  * Set the `eligible` in the response body to `false`
+  * Update the label to `rejected_verification`
+  * Update the description
+
+include::setting_plugin_on_clone.adoc[]

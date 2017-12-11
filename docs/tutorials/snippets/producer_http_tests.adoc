@@ -1,0 +1,10 @@
+include::generating_tests_from_contract.adoc[]
+
+==== Fixing broken HTTP tests
+
+- Let's start with HTTP
+  * First let's write the missing implementation in `ProducerController`. The logic to be written
+    is extremely simple - if the `personCheckingService.shouldGetBeer(...)` returns `true` then we
+    should return `new Response(BeerCheckStatus.OK)`. Otherwise `new Response(BeerCheckStatus.NOT_OK)`.
+    (<<_producerController_implementation,Show solution>>)
+include::fixing_base_class.adoc[]

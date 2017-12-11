@@ -1,50 +1,18 @@
 #!/bin/bash
 
 set -o errexit
+set -o errtrace
+set -o nounset
+set -o pipefail
 
-function build_maven() {
-    echo -e "\n\nInstalling common\n\n"
-    cd ${ROOT}/common
-    ./mvnw clean install -U
-    cd ${ROOT}
-
-    echo -e "\n\nBuilding everything\n\n"
-    ./mvnw clean install -Ptest -U
-}
+ROOT=`pwd`
 
 function clean() {
     rm -rf ~/.m2/repository/com/example/
     rm -rf ~/.gradle/caches/modules-2/files-2.1/com.example/
 }
 
-function build() {
-    local folder="${1}"
-    echo -e "\n\nBuilding ${folder}\n\n"
-    cd "${ROOT}/${folder}"
-    ./gradlew clean build publishToMavenLocal
-    cd "${ROOT}"
-}
-
-function build_gradle() {
-    clean
-
-    echo -e "\n\nBuilding the external contracts jar\n\n"
-    cd "${ROOT}/beer_contracts"
-    ./mvnw clean install -U
-
-    build common
-    build producer
-    build producer_with_external_contracts
-    build producer_with_restdocs
-    build consumer
-    build consumer_with_restdocs
-    return 0
-}
-
-
 clean
-ROOT=`pwd`
-RETRIES=1
 
 cat <<'EOF'
  .----------------.  .----------------.  .----------------.  .----------------.  .-----------------.
@@ -60,15 +28,7 @@ cat <<'EOF'
  '----------------'  '----------------'  '----------------'  '----------------'  '----------------'
 EOF
 
-for i in $( seq 1 "${RETRIES}" ); do
-    echo "Attempt #$i/${RETRIES}..."
-    if build_maven; then
-    echo "Tests succeeded!"
-        break;
-    else
-        echo "Fail #$i/${RETRIES}... will try again"
-    fi
-done
+. ${ROOT}/scripts/runMavenBuilds.sh
 
 cat <<'EOF'
  .----------------.  .----------------.  .-----------------. .----------------.  .----------------.  .----------------.
@@ -85,10 +45,9 @@ cat <<'EOF'
 EOF
 
 echo -e "\n\nBuilding beer_contracts\n\n"
-cd "${ROOT}/beer_contracts"
-
 echo -e "\n\nBuilding only the subset of contracts\n\n"
-cd "${ROOT}/beer_contracts/src/main/resources/contracts/com/example/beer-api-producer-external"
+
+cd "${ROOT}/beer_contracts/src/main/resources/contracts/com/example/beer-api-producer-external/1.0.0"
 cp "${ROOT}/mvnw" .
 cp -r "${ROOT}/.mvn" .
 ./mvnw clean install -DskipTests -U
@@ -109,13 +68,24 @@ cat <<'EOF'
  '----------------'  '----------------'  '----------------'  '----------------'  '----------------'  '----------------'
 EOF
 
+. ${ROOT}/scripts/runGradleBuilds.sh
 
-for i in $( seq 1 "${RETRIES}" ); do
-    echo "Attempt #$i/${RETRIES}..."
-    if build_gradle; then
-    echo "Tests succeeded!"
-        exit 0
-    else
-        echo "Fail #$i/${RETRIES}... will try again"
-    fi
-done
+cat <<'EOF'
+ .----------------.  .----------------.  .----------------.  .----------------.
+| .--------------. || .--------------. || .--------------. || .--------------. |
+| |  ________    | || |     ____     | || |     ______   | || |    _______   | |
+| | |_   ___ `.  | || |   .'    `.   | || |   .' ___  |  | || |   /  ___  |  | |
+| |   | |   `. \ | || |  /  .--.  \  | || |  / .'   \_|  | || |  |  (__ \_|  | |
+| |   | |    | | | || |  | |    | |  | || |  | |         | || |   '.___`-.   | |
+| |  _| |___.' / | || |  \  `--'  /  | || |  \ `.___.'\  | || |  |`\____) |  | |
+| | |________.'  | || |   `.____.'   | || |   `._____.'  | || |  |_______.'  | |
+| |              | || |              | || |              | || |              | |
+| '--------------' || '--------------' || '--------------' || '--------------' |
+ '----------------'  '----------------'  '----------------'  '----------------'
+EOF
+
+echo "Generating docs"
+cd ${ROOT} && ./gradlew generateDocumentation
+
+#echo "Running Stub Runner Boot test"
+#. ${ROOT}/scripts/stub_runner_boot.sh

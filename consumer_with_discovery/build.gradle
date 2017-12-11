@@ -7,7 +7,7 @@ buildscript {
 		maven { url "http://repo.spring.io/release" }
 	}
 	dependencies {
-		classpath "org.springframework.boot:spring-boot-gradle-plugin:1.5.1.RELEASE"
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.0.0.M7"
 	}
 }
 
@@ -23,7 +23,8 @@ repositories {
 }
 
 apply plugin: 'groovy'
-apply plugin: 'spring-boot'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 apply plugin: 'maven-publish'
 
 dependencyManagement {
@@ -35,10 +36,14 @@ dependencyManagement {
 dependencies {
 	compile("org.springframework.boot:spring-boot-starter-web")
 	compile("org.springframework.boot:spring-boot-starter-actuator")
-	compile("org.springframework.cloud:spring-cloud-starter-eureka")
+	// remove::start[]
+	compile("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+	// remove::end[]
 
+	// remove::start[]
 	testCompile("org.springframework.cloud:spring-cloud-starter-contract-stub-runner")
 	testCompile("com.example:beer-common:0.0.1-SNAPSHOT")
+	// remove::end[]
 }
 
 test {
@@ -48,5 +53,5 @@ test {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.14'
+    gradleVersion = '4.3.1'
 }

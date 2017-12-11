@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,24 +26,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
-@AutoConfigureStubRunner(workOffline = true, ids = "com.example:beer-api-producer:+:stubs:8095")
+//remove::start[]
+@AutoConfigureStubRunner(workOffline = true, ids = "com.example:beer-api-producer")
+//remove::end[]
 @DirtiesContext
 public class BeerStatsControllerTest extends AbstractTest {
 
 	@Autowired MockMvc mockMvc;
 	@Autowired BeerStatsController beerStatsController;
 
+	@Value("${stubrunner.runningstubs.beer-api-producer.port}") int producerPort;
+
 	@Before
 	public void setupPort() {
-		beerStatsController.port = 8095;
+		beerStatsController.port = producerPort;
 	}
 
 	@Test public void should_return_a_personalized_text_with_amount_of_beers() throws Exception {
+		//remove::start[]
 		mockMvc.perform(MockMvcRequestBuilders.post("/stats")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(statsJson.write(new StatsRequest("marcin")).getJson()))
 				.andExpect(status().isOk())
 				.andExpect(content().string("Dear marcin thanks for your interested in drinking beer. You've drank <5> beers"));
+		//remove::end[]
 	}
 }
 

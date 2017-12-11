@@ -1,0 +1,4 @@
+include::producer_ide_setup.adoc[]
+
+include::setting_plugin_on_producer.adoc[]
+include::package_with_base_classes.adoc[]
